@@ -37,7 +37,9 @@ def haveWon(board, size, player):
         if "w" in board[size-1]:
             return True
 
-        # it's your opponent's turn but your opponent can't move 
+        # it's your opponent's turn but your opponent can't move, no new states are returned from move generation
+        if len(moveAll(board, size, "b")) == 0:
+            return True 
 
     # playing as black pawn 
     else:
@@ -53,6 +55,12 @@ def haveWon(board, size, player):
         if "b" in board[0]:
             return True
 
+        # it's your opponent's turn but your opponent can't move, no new states are returned from move generation
+        if len(moveAll(board, size, "w")) == 0:
+            return True 
+
+def moveAll(board, size, player):
+    return moveAhead(board, size, player) + moveDiagonal(board, size, player)
 
 ## Moves a pawn straight ahead one space if that space is empty 
 # board: n-element list with each of the elements representing a row of the board
@@ -100,6 +108,66 @@ def moveAhead(board, size, player):
             # else, that position is occupied so we can just keep looking at the other pawns          
     return moved
 
+## Moves a pawn diagonally once space forward if opponent is occupying that space
+def moveDiagonal(board, size, player):
+    # list of moves made 
+    moved = []
+    # get coordinate positions for where the white and black pawns are 
+    whiteCoords, blackCoords = findCoords(board, size)
+    # playing as white pawn 
+    if (player == "w"):
+         for coord in whiteCoords:
+            # position if white pawn moved diagonally to left 
+            mvDiagLeft = [coord[0]+1, coord[1]-1]
+            # if that position is in the blackCoords list, we can move there 
+            if mvDiagLeft in blackCoords:
+                boardCpy = [row[:] for row in board]
+                # access the position of where the white pawn was and change it to empty "-"
+                boardCpy[coord[0]][coord[1]] = "-"
+                # access the position of where the white pawn is going to move and change it to "w"
+                boardCpy[mvDiagLeft[0]][mvDiagLeft[1]] = "w"
+                # append the new board state to moved
+                moved.append(boardCpy) 
+
+            # position if white pawn moved diagonally to the right 
+            mvDiagRight = [coord[0]+1, coord[1]+1]
+            # if that position is in the blackCoords list, we can move there 
+            if mvDiagRight in blackCoords:
+                boardCpy = [row[:] for row in board]
+                # access the position of where the white pawn was and change it to empty "-"
+                boardCpy[coord[0]][coord[1]] = "-"
+                # access the position of where the white pawn is going to move and change it to "w"
+                boardCpy[mvDiagRight[0]][mvDiagRight[1]] = "w"
+                # append the new board state to moved
+                moved.append(boardCpy) 
+
+    # playing as black pawn 
+    else:
+        for coord in blackCoords:
+            # position if black pawn moved diagonally to left 
+            mvDiagLeft = [coord[0]-1, coord[1]-1]
+            # if that position is in the whiteCoords list, we can move there 
+            if mvDiagLeft in whiteCoords:
+                boardCpy = [row[:] for row in board]
+                # access the position of where the black pawn was and change it to empty "b"
+                boardCpy[coord[0]][coord[1]] = "-"
+                # access the position of where the black pawn is going to move and change it to "b"
+                boardCpy[mvDiagLeft[0]][mvDiagLeft[1]] = "b"
+                # append the new board state to moved
+                moved.append(boardCpy) 
+
+            # position if black pawn moved diagonally to the right 
+            mvDiagRight = [coord[0]-1, coord[1]+1]
+            # if that position is in the whiteCoords list, we can move there 
+            if mvDiagRight in whiteCoords:
+                boardCpy = [row[:] for row in board]
+                # access the position of where the black pawn was and change it to empty "-"
+                boardCpy[coord[0]][coord[1]] = "-"
+                # access the position of where the black pawn is going to move and change it to "b"
+                boardCpy[mvDiagRight[0]][mvDiagRight[1]] = "b"
+                # append the new board state to moved
+                moved.append(boardCpy) 
+    return moved 
 
 # Finds coordinate positions of players' pawns
 # board: n-element list with each of the elements representing a row of the board
@@ -135,5 +203,5 @@ def stringToList(board):
 
 # -- TESTING -- #
 ##hexapawn(["www","---","bbb"],3,'w',2)
-boards = moveAhead([['w', 'w', 'w'], ['-', 'b', 'b'], ['b', 'b', 'b']], 3, "b") 
+boards = moveAll([["-","w","w"],["w","b","-"],["b","-","b"]], 3, "w")
 for board in boards: printBoard(board)
