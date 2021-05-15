@@ -1,3 +1,4 @@
+# I AM USING THE MATH LIBRAY WHICH IS ONLY COMPATIBLE WITH PYTHON 3 
 import math
 
 ## Top level function 
@@ -13,7 +14,8 @@ def hexapawn(board, size, player, depth):
     # 2) game in progress
     #   - either white is the maximizing player:  black pawns have just moved so now it's white pawns' turn to move 
     #   - or black is the maximizing player: white pawns have just moved so now it's black pawns' turn to move 
-    return minimax(newBoard, size, player, depth, player)
+    (optEval, optBoard) = minimax(newBoard, size, player, depth, player)
+    return listToString(optBoard)
 
 
 ## Implementation of the Minimax algorithm 
@@ -26,36 +28,38 @@ def hexapawn(board, size, player, depth):
 def minimax(board, size, player, depth, turn): 
     # later need to add if game is over (meaning no one can make any more moves)
     if depth == 0:
-        return staticEval(board, size, player, turn)
+        return (staticEval(board, size, player, turn), board)
     # if it's the turn of the maximizing player, want to get highest eval in this position  
     if turn == player:
         maxEval = (-math.inf)
         children = allMoves(board, size, turn)
-        for s in children: printBoard(s)
         for child in children:
             # white is the maximizing player, so next it's black pawn's turn 
             if player == "w": 
-                eval = minimax(child, size, player, depth-1, "b")
+                (eval, newBoard) = minimax(child, size, player, depth-1, "b")
             # black is the maximizing player, so next it's white pawn's turn 
             else:
-                eval = minimax(child, size, player, depth-1, "w") 
-            maxEval = max(maxEval, eval)
-        return maxEval
+                (eval, newBoard) = minimax(child, size, player, depth-1, "w") 
+            if eval > maxEval:
+                maxEval = eval
+                maxBoard = child
+        return (maxEval, maxBoard)
 
     # it's the turn of the minimizing player, want to get lowest eval in this position 
     else:
         minEval = math.inf
         children = allMoves(board, size, turn)
-        for s in children: printBoard(s)
         for child in children:
             # black is the minimizing player, so next it's white pawn's turn 
             if turn == "b": 
-                eval = minimax(child, size, player, depth-1, "w")
+                (eval, newBoard) = minimax(child, size, player, depth-1, "w")
             # white is the minimizing player, so next it's black pawn's turn 
             else:
-                eval = minimax(child, size, player, depth-1, "b") 
-                minEval = min(minEval, eval)
-        return minEval
+                (eval, newBoard) = minimax(child, size, player, depth-1, "b") 
+            if eval < minEval:
+                minEval = eval
+                minBoard = child
+        return (minEval, minBoard)
             
 ## Evaluation Function (the one from class slides): 
 #   +10 if you have won the board 
@@ -336,8 +340,13 @@ def stringToList(board):
         newBoard.append(list(row))
     return newBoard
 
+def listToString(board): 
+    joined = []
+    for row in board:
+        joined.append("".join(row))
+    return joined
 
 # -- TESTING -- #
 result = hexapawn(["-ww","w--","bbb"],3,'b',2)
 print(result)
-#for board in boards: printBoard(board)
+
