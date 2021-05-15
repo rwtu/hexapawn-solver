@@ -24,42 +24,38 @@ def hexapawn(board, size, player, depth):
 # turn: can be either "w" or "b", indicates whose turn it is to move 
 # returns tuple list containing (evaluation function value, board) 
 def minimax(board, size, player, depth, turn): 
+    # later need to add if game is over (meaning no one can make any more moves)
     if depth == 0:
-        return (staticEval(board, size, player, turn), board)
+        return staticEval(board, size, player, turn)
     # if it's the turn of the maximizing player, want to get highest eval in this position  
     if turn == player:
         maxEval = (-math.inf)
-        maxBoard = board # variable used to store the board with maximum evaluation function value
         children = allMoves(board, size, turn)
-        for child in children: printBoard(child)
+        for s in children: printBoard(s)
         for child in children:
             # white is the maximizing player, so next it's black pawn's turn 
             if player == "w": 
-                (eval, newBoard) = minimax(child, size, player, depth-1, "b")
+                eval = minimax(child, size, player, depth-1, "b")
             # black is the maximizing player, so next it's white pawn's turn 
             else:
-                (eval, newBoard) = minimax(child, size, player, depth-1, "w") 
-            if eval > maxEval:
-                maxEval = eval 
-                maxBoard = child
-        return (maxEval, maxBoard) 
+                eval = minimax(child, size, player, depth-1, "w") 
+            maxEval = max(maxEval, eval)
+        return maxEval
 
     # it's the turn of the minimizing player, want to get lowest eval in this position 
     else:
         minEval = math.inf
-        minBoard = board # variable used to store the board with minimum evaluation function value
         children = allMoves(board, size, turn)
+        for s in children: printBoard(s)
         for child in children:
             # black is the minimizing player, so next it's white pawn's turn 
             if turn == "b": 
-                (eval, newBoard) = minimax(child, size, player, depth-1, "w")
+                eval = minimax(child, size, player, depth-1, "w")
             # white is the minimizing player, so next it's black pawn's turn 
             else:
-                (eval, newBoard) = minimax(child, size, player, depth-1, "b") 
-            if eval < minEval:
-                minEval = eval 
-                minBoard = child
-        return (minEval, minBoard)
+                eval = minimax(child, size, player, depth-1, "b") 
+                minEval = min(minEval, eval)
+        return minEval
             
 ## Evaluation Function (the one from class slides): 
 #   +10 if you have won the board 
@@ -134,7 +130,7 @@ def haveWon(board, size, player, turn):
             return True
 
         # it's your opponent's turn but your opponent can't move
-        if turn == "w" and cannotMove(board,size, turn) == True:
+        if turn == "w" and cannotMove(board,size,turn) == True:
             return True
 
     return False 
@@ -150,7 +146,7 @@ def cannotMove(board, size, turn):
         for coord in whiteCoords:
             try: 
                 # could move down
-                if [coord[0]+1, coord[1]] == "-":
+                if board[coord[0]+1][coord[1]] == "-":
                     return False 
             except: pass
             try: 
@@ -168,7 +164,7 @@ def cannotMove(board, size, turn):
         for coord in blackCoords:
             try: 
                 # could move up
-                if [coord[0]-1, coord[1]] == "-":
+                if board[coord[0]-1][coord[1]] == "-":
                     return False 
             except: pass
             try: 
