@@ -1,38 +1,95 @@
-# intializes global variable to keep track of whose turn it is to move 
-turn = "b"
+import math
 
 ## Top level function 
 # board: n-element list with each of the elements representing a row of the board
 # size: integer to indicate size of the board
-# player: can be either "w" or "b", indicates which color pawn we're playing as/whose move we want to predict 
-# lookAhead: integer to indicate how many moves ahead minimax is to look 
-def hexapawn(board, size, player, lookAhead):
+# player: can be either "w" or "b", whose move we want to predict/ who the maximizing player is
+# depth: integer to indicate how many moves ahead minimax is to look 
+def hexapawn(board, size, player, depth):
     # converts each of the rows to a list so they can be mutable 
     newBoard = stringToList(board) 
-    turn = player 
+    # --TWO SITUATIONS -- # 
+    # 1) game has just begun: no one has moved yet 
+    # 2) game in progress
+    #   - either white is the maximizing player:  black pawns have just moved so now it's white pawns' turn to move 
+    #   - or black is the maximizing player: white pawns have just moved so now it's black pawns' turn to move 
+    return minimax(newBoard, size, player, depth, player)
 
-## Evaluation Function 
-def evalFunct(board, size, player):
+
+## Implementation of the Minimax algorithm 
+# board: n-element list with each of the elements representing a row of the board
+# size: integer to indicate size of the board
+# player: can be either "w" or "b", indicates whose move we want to predict/ who the maximizing player is
+# depth: integer to indicate how many moves ahead minimax is to look 
+# turn: can be either "w" or "b", indicates whose turn it is to move 
+# returns tuple list containing (evaluation function value, board) 
+def minimax(board, size, player, depth, turn): 
+    if depth == 0:
+        return (staticEval(board, size, player, turn), board)
+    # if it's the turn of the maximizing player, want to get highest eval in this position  
+    if turn == player:
+        maxEval = (-math.inf)
+        maxBoard = board # variable used to store the board with maximum evaluation function value
+        children = allMoves(board, size, turn)
+        for child in children: printBoard(child)
+        for child in children:
+            # white is the maximizing player, so next it's black pawn's turn 
+            if player == "w": 
+                (eval, newBoard) = minimax(child, size, player, depth-1, "b")
+            # black is the maximizing player, so next it's white pawn's turn 
+            else:
+                (eval, newBoard) = minimax(child, size, player, depth-1, "w") 
+            if eval > maxEval:
+                maxEval = eval 
+                maxBoard = child
+        return (maxEval, maxBoard) 
+
+    # it's the turn of the minimizing player, want to get lowest eval in this position 
+    else:
+        minEval = math.inf
+        minBoard = board # variable used to store the board with minimum evaluation function value
+        children = allMoves(board, size, turn)
+        for child in children:
+            # black is the minimizing player, so next it's white pawn's turn 
+            if turn == "b": 
+                (eval, newBoard) = minimax(child, size, player, depth-1, "w")
+            # white is the minimizing player, so next it's black pawn's turn 
+            else:
+                (eval, newBoard) = minimax(child, size, player, depth-1, "b") 
+            if eval < minEval:
+                minEval = eval 
+                minBoard = child
+        return (minEval, minBoard)
+            
+## Evaluation Function (the one from class slides): 
+#   +10 if you have won the board 
+#   -10 opponent wins
+#   num. your pawns - num. opponents pawns if no one wins 
+# board: n-element list with each of the elements representing a row of the board
+# size: integer to indicate size of the board
+# player: can be either "w" or "b", indicates whose move we want to predict/ who the maximizing player is
+# returns a single integer - result from static board evaluation 
+def staticEval(board, size, player, turn):
     boardVal = 0 
     whiteCoords, blackCoords = findCoords(board, size)
-    # playing as white pawn 
+    # white pawn is the maximizing player
     if player == "w": 
         # white pawns have won the board 
-        if haveWon(board, size, player) == True:
+        if haveWon(board, size, player, turn) == True:
             boardVal = 10 
         # black pawns have won the board 
-        elif haveWon(board, size, "b") == True:
+        elif haveWon(board, size, "b", turn) == True:
             boardVal = -10
         # no one's won - calculate # of white pawns - # black pawns 
         else: 
             boardVal = len(whiteCoords) - len(blackCoords)
-    # playing as black pawn 
+    # black pawn is the maximizing player
     if player == "b": 
         # black pawns have won the board 
-        if haveWon(board, size, player) == True:
+        if haveWon(board, size, player, turn) == True:
             boardVal = 10 
         # white pawns have won the board 
-        elif haveWon(board, size, "w") == True:
+        elif haveWon(board, size, "w", turn) == True:
             boardVal = -10
         # no one's won - calculate # of black pawns - # white pawns 
         else: 
@@ -42,10 +99,9 @@ def evalFunct(board, size, player):
 ## Detects if the player passed into the function has won the game 
 # board: n-element list with each of the elements representing a row of the board
 # size: integer to indicate size of the board
-# player: can be either "w" or "b" to indicate whether you're playing as white pawns or black pawns
-def haveWon(board, size, player):
-    whiteCoords, blackCoords = findCoords(board, size)
-    # playing as white pawn 
+# player: can be either "w" or "b", indicates whose move we want to predict/ who the maximizing player is
+def haveWon(board, size, player, turn):
+    # white pawn is the maximizing player
     if (player == "w"):
         # captured all of opponent's pawns 
         for row in board: 
@@ -60,10 +116,10 @@ def haveWon(board, size, player):
             return True
 
         # it's your opponent's turn but your opponent can't move
-        if turn == "b" and cannotMove(board,size) == True:
+        if turn == "b" and cannotMove(board,size, turn) == True:
             return True
 
-    # playing as black pawn 
+    # black pawn is the maximizing player 
     else:
         # captured all of opponent's pawns 
         for row in board: 
@@ -78,14 +134,16 @@ def haveWon(board, size, player):
             return True
 
         # it's your opponent's turn but your opponent can't move
-        if turn == "w" and cannotMove(board,size) == True:
+        if turn == "w" and cannotMove(board,size, turn) == True:
             return True
 
     return False 
 
 # Determines if the players whose turn it is to move can move or not 
+# board: n-element list with each of the elements representing a row of the board
+# size: integer to indicate size of the board
 # returns True if they cannot move, False if the can move 
-def cannotMove(board, size):
+def cannotMove(board, size, turn):
     whiteCoords, blackCoords = findCoords(board, size)
     # It's white pawns' turn to move 
     if turn == "w":
@@ -125,14 +183,14 @@ def cannotMove(board, size):
             except: pass
         return True 
 
-def moveAll(board, size):
-    return moveAhead(board, size) + moveDiagonal(board, size)
+def allMoves(board, size, turn):
+    return moveAhead(board, size,turn) + moveDiagonal(board, size, turn)
 
 ## Moves a pawn straight ahead one space if that space is empty 
 # board: n-element list with each of the elements representing a row of the board
 # size: integer to indicate size of the boards
 # returns a list of all possible moves
-def moveAhead(board, size):
+def moveAhead(board, size, turn):
     # list of moves made 
     moved = []
     # get coordinate positions for where the white and black pawns are 
@@ -154,9 +212,7 @@ def moveAhead(board, size):
                     # append this new board state to moved 
                     moved.append(boardCpy)
             except:
-                continue
-        # now change variable to indicate it's now black pawn's turn to move
-        turn = "b"       
+                continue      
 
     # it's black pawn's player turn to move, generate the moves they can make  
     else:
@@ -176,16 +232,13 @@ def moveAhead(board, size):
                     moved.append(boardCpy)
             except: 
                 continue  
-        # now change variable to indicate it's now white pawn's turn to move
-        turn = "w"   
-
     return moved
 
 ## Moves a pawn diagonally once space forward if opponent is occupying that space
 # board: n-element list with each of the elements representing a row of the board
 # size: integer to indicate size of the board
 # returns a list of all possible moves
-def moveDiagonal(board, size):
+def moveDiagonal(board, size, turn):
     # list of moves made 
     moved = []
     # get coordinate positions for where the white and black pawns are 
@@ -221,8 +274,6 @@ def moveDiagonal(board, size):
                     moved.append(boardCpy) 
             except:
                 continue
-        # now change variable to indicate it's now black pawn's turn to move
-        turn = "b"   
 
     # it's black pawn's player turn to move, generate the moves they can make  
     else:
@@ -255,8 +306,6 @@ def moveDiagonal(board, size):
                     moved.append(boardCpy) 
             except:
                 continue
-        # now change variable to indicate it's now white pawn's turn to move
-        turn = "w"   
     return moved 
 
 # Finds coordinate positions of players' pawns
@@ -291,8 +340,8 @@ def stringToList(board):
         newBoard.append(list(row))
     return newBoard
 
+
 # -- TESTING -- #
-##hexapawn(["www","---","bbb"],3,'w',2)
-result = evalFunct([["-","w","-"],["w","b","w"],["b","-","b"]], 3, "b")
+result = hexapawn(["-ww","w--","bbb"],3,'b',2)
 print(result)
 #for board in boards: printBoard(board)
