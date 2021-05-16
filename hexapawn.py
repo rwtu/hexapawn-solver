@@ -1,13 +1,13 @@
 # I AM USING THE MATH LIBRAY WHICH IS ONLY COMPATIBLE WITH PYTHON 3 
 import math
 
-## Top level function 
+## TOP LEVEL FUNCTION
 # board: n-element list with each of the elements representing a row of the board
 # size: integer to indicate size of the board
-# player: can be either "w" or "b", whose move we want to predict/ who the maximizing player is
+# player: can be either "w" or "b", whose move we want to predict/who the maximizing player is
 # depth: integer to indicate how many moves ahead minimax is to look 
 def hexapawn(board, size, player, depth):
-    # converts each of the rows to a list so they can be mutable 
+    # converts each of the rows to a list so they're mutable 
     newBoard = stringToList(board) 
     # --TWO SITUATIONS -- # 
     # 1) game has just begun: no one has moved yet 
@@ -18,7 +18,7 @@ def hexapawn(board, size, player, depth):
     return listToString(optBoard)
 
 
-## Implementation of the Minimax algorithm 
+## MINIMAX ALGORITHM IMPLEMENTATION
 # board: n-element list with each of the elements representing a row of the board
 # size: integer to indicate size of the board
 # player: can be either "w" or "b", indicates whose move we want to predict/ who the maximizing player is
@@ -26,8 +26,8 @@ def hexapawn(board, size, player, depth):
 # turn: can be either "w" or "b", indicates whose turn it is to move 
 # returns tuple list containing (evaluation function value, board) 
 def minimax(board, size, player, depth, turn): 
-    # later need to add if game is over (meaning no one can make any more moves)
-    if depth == 0:
+    # base case: have reached desired depth or cannot make a move
+    if depth == 0 or cannotMove(board, size, turn) == True:
         return (staticEval(board, size, player, turn), board)
     # if it's the turn of the maximizing player, want to get highest eval in this position  
     if turn == player:
@@ -44,7 +44,6 @@ def minimax(board, size, player, depth, turn):
                 maxEval = eval
                 maxBoard = child
         return (maxEval, maxBoard)
-
     # it's the turn of the minimizing player, want to get lowest eval in this position 
     else:
         minEval = math.inf
@@ -103,37 +102,32 @@ def staticEval(board, size, player, turn):
 def haveWon(board, size, player, turn):
     # white pawn is the maximizing player
     if (player == "w"):
-        # captured all of opponent's pawns 
+        # checks to see if captured all black pawns
         for row in board: 
             if "b" in row:
                 break
         else:
             return True
-    
-        # one of your pawns reach the opposite end of the board
+        # one of the white pawns reach the opposite end of the board
         # which could be any space in last row (size-1)
         if "w" in board[size-1]:
             return True
-
         # it's your opponent's turn but your opponent can't move
         if turn == "b" and cannotMove(board,size, turn) == True:
             return True
 
     # black pawn is the maximizing player 
     else:
-        # captured all of opponent's pawns 
+        # checks to see if captured all white pawns
         for row in board: 
             if "w" in row:
                 break
         else:
             return True
-    
-        # one of your pawns reach the opposite end of the board
-        # which could be any space in first row (0)
+        # black pawn has reached the opposite end of the board
         if "b" in board[0]:
             return True
-
-        # it's your opponent's turn but your opponent can't move
+        # it's white pawns' turn but they can't move
         if turn == "w" and cannotMove(board,size,turn) == True:
             return True
 
@@ -347,6 +341,14 @@ def listToString(board):
     return joined
 
 # -- TESTING -- #
-result = hexapawn(["-ww","w--","bbb"],3,'b',2)
-print(result)
+#result = hexapawn(["-ww","w--","bbb"],3,'b',2)
+#print(result)
 
+#result = hexapawn(['wwwww','-----','-----','-----','bbbbb'], 5, 'w', 5)
+#print(result)
+
+#result = hexapawn(["www","---","bbb"],3,'w',2)
+#print(result)
+
+result = hexapawn(["w-w","-w-","b-b"],3,'b',2)
+print(result)
