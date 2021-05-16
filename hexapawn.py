@@ -1,13 +1,14 @@
-# I AM USING THE MATH LIBRAY WHICH IS ONLY COMPATIBLE WITH PYTHON 3 
+# I AM USING THE MATH LIBRARY WHICH IS ONLY COMPATIBLE WITH PYTHON 3 
 import math
 
 ## TOP LEVEL FUNCTION
-# board: n-element list with each of the elements representing a row of the board
+# board: list of strings, each representing a row of the board
 # size: integer to indicate size of the board
 # player: can be either "w" or "b", whose move we want to predict/who the maximizing player is
-# depth: integer to indicate how many moves ahead minimax is to look 
+# depth: integer to indicate how many moves ahead minimax is to look
+# returns the optimal next move based on minimax algorithm 
 def hexapawn(board, size, player, depth):
-    # converts each of the rows to a list so they're mutable 
+    # converts each of the rows in string form to lists so they're mutable 
     newBoard = stringToList(board) 
     # --TWO SITUATIONS -- # 
     # 1) game has just begun: no one has moved yet 
@@ -15,27 +16,29 @@ def hexapawn(board, size, player, depth):
     #   - either white is the maximizing player:  black pawns have just moved so now it's white pawns' turn to move 
     #   - or black is the maximizing player: white pawns have just moved so now it's black pawns' turn to move 
     (optEval, optBoard) = minimax(newBoard, size, player, depth, player)
+    # turn the lists back to strings before returning the answer 
     return listToString(optBoard)
 
 
 ## MINIMAX ALGORITHM IMPLEMENTATION
-# board: n-element list with each of the elements representing a row of the board
+# board: list with list elements, each of the list elements represents a row in the board
 # size: integer to indicate size of the board
 # player: can be either "w" or "b", indicates whose move we want to predict/ who the maximizing player is
 # depth: integer to indicate how many moves ahead minimax is to look 
 # turn: can be either "w" or "b", indicates whose turn it is to move 
-# returns tuple list containing (evaluation function value, board) 
+# returns tuple containing (evaluation function value, board) for optimal next move
 def minimax(board, size, player, depth, turn): 
-    # base case: have reached desired depth or cannot make a move
+    # base case - have reached desired depth or cannot make a move
     if depth == 0 or cannotMove(board, size, turn) == True:
         return (staticEval(board, size, player, turn), board)
-    # if it's the turn of the maximizing player, want to get highest eval in this position  
+    # if it's the turn of the maximizing player, want to get highest evaluation value from this position  
     if turn == player:
         maxEval = (-math.inf)
         children = allMoves(board, size, turn)
         for child in children:
             # white is the maximizing player, so next it's black pawn's turn 
-            if player == "w": 
+            if player == "w":
+                # newBoard contains child boards generated from recursive calls 
                 (eval, newBoard) = minimax(child, size, player, depth-1, "b")
             # black is the maximizing player, so next it's white pawn's turn 
             else:
@@ -44,13 +47,14 @@ def minimax(board, size, player, depth, turn):
                 maxEval = eval
                 maxBoard = child
         return (maxEval, maxBoard)
-    # it's the turn of the minimizing player, want to get lowest eval in this position 
+    # it's the turn of the minimizing player, want to get lowest evaluation value from this position 
     else:
         minEval = math.inf
         children = allMoves(board, size, turn)
         for child in children:
             # black is the minimizing player, so next it's white pawn's turn 
             if turn == "b": 
+                # newBoard contains child boards generated from recursive calls 
                 (eval, newBoard) = minimax(child, size, player, depth-1, "w")
             # white is the minimizing player, so next it's black pawn's turn 
             else:
@@ -60,11 +64,11 @@ def minimax(board, size, player, depth, turn):
                 minBoard = child
         return (minEval, minBoard)
             
-## Evaluation Function (the one from class slides): 
+## EVALUATION FUNCTION (from class)
 #   +10 if you have won the board 
 #   -10 opponent wins
 #   num. your pawns - num. opponents pawns if no one wins 
-# board: n-element list with each of the elements representing a row of the board
+# board: list with list elements,  each of the list elements represents a row in the board
 # size: integer to indicate size of the board
 # player: can be either "w" or "b", indicates whose move we want to predict/ who the maximizing player is
 # returns a single integer - result from static board evaluation 
@@ -95,101 +99,20 @@ def staticEval(board, size, player, turn):
             boardVal = len(blackCoords) - len(whiteCoords)
     return boardVal
 
-## Detects if the player passed into the function has won the game 
-# board: n-element list with each of the elements representing a row of the board
-# size: integer to indicate size of the board
-# player: can be either "w" or "b", indicates whose move we want to predict/ who the maximizing player is
-def haveWon(board, size, player, turn):
-    # white pawn is the maximizing player
-    if (player == "w"):
-        # checks to see if captured all black pawns
-        for row in board: 
-            if "b" in row:
-                break
-        else:
-            return True
-        # one of the white pawns reach the opposite end of the board
-        # which could be any space in last row (size-1)
-        if "w" in board[size-1]:
-            return True
-        # it's your opponent's turn but your opponent can't move
-        if turn == "b" and cannotMove(board,size, turn) == True:
-            return True
-
-    # black pawn is the maximizing player 
-    else:
-        # checks to see if captured all white pawns
-        for row in board: 
-            if "w" in row:
-                break
-        else:
-            return True
-        # black pawn has reached the opposite end of the board
-        if "b" in board[0]:
-            return True
-        # it's white pawns' turn but they can't move
-        if turn == "w" and cannotMove(board,size,turn) == True:
-            return True
-
-    return False 
-
-# Determines if the players whose turn it is to move can move or not 
-# board: n-element list with each of the elements representing a row of the board
-# size: integer to indicate size of the board
-# returns True if they cannot move, False if the can move 
-def cannotMove(board, size, turn):
-    whiteCoords, blackCoords = findCoords(board, size)
-    # It's white pawns' turn to move 
-    if turn == "w":
-        for coord in whiteCoords:
-            try: 
-                # could move down
-                if board[coord[0]+1][coord[1]] == "-":
-                    return False 
-            except: pass
-            try: 
-                # could move diagonally left 
-                if [coord[0]+1, coord[1]-1] in blackCoords:
-                    return False 
-            except: pass
-            try: 
-                # could move diagonally right
-                if [coord[0]+1, coord[1]+1] in blackCoords:
-                    return False  
-            except: pass
-        return True
-    else:
-        for coord in blackCoords:
-            try: 
-                # could move up
-                if board[coord[0]-1][coord[1]] == "-":
-                    return False 
-            except: pass
-            try: 
-                # could move diagonally left 
-                if [coord[0]-1, coord[1]-1] in whiteCoords:
-                    return False 
-            except: pass
-            try: 
-                # could move diagonally right
-                if [coord[0]-1, coord[1]+1] in whiteCoords:
-                    return False  
-            except: pass
-        return True 
-
+## MOVE GENERATOR 
 def allMoves(board, size, turn):
     return moveAhead(board, size,turn) + moveDiagonal(board, size, turn)
 
 ## Moves a pawn straight ahead one space if that space is empty 
-# board: n-element list with each of the elements representing a row of the board
+# board: list with list elements,  each of the list elements represents a row in the board
 # size: integer to indicate size of the boards
-# returns a list of all possible moves
+# returns a list of all possible moves that can be made
 def moveAhead(board, size, turn):
     # list of moves made 
     moved = []
     # get coordinate positions for where the white and black pawns are 
     whiteCoords, blackCoords = findCoords(board, size)
-    # if it's white pawn's turn to move, generate the next moves they can make 
+    # if it's white pawns' turn to move, generate the next moves they can make 
     if (turn == "w"):
         for coord in whiteCoords:
             try: 
@@ -203,12 +126,11 @@ def moveAhead(board, size, turn):
                     boardCpy[coord[0]][coord[1]] = "-"
                     # access the position of where the white pawn is going to move and change it to "w"
                     boardCpy[mvDown[0]][mvDown[1]] = "w"
-                    # append this new board state to moved 
                     moved.append(boardCpy)
             except:
                 continue      
 
-    # it's black pawn's player turn to move, generate the moves they can make  
+    # it's black pawns' turn to move, generate the moves they can make  
     else:
         for coord in blackCoords: 
             try:
@@ -229,7 +151,7 @@ def moveAhead(board, size, turn):
     return moved
 
 ## Moves a pawn diagonally once space forward if opponent is occupying that space
-# board: n-element list with each of the elements representing a row of the board
+# board: list with list elements,  each of the list elements represents a row in the board
 # size: integer to indicate size of the board
 # returns a list of all possible moves
 def moveDiagonal(board, size, turn):
@@ -302,11 +224,95 @@ def moveDiagonal(board, size, turn):
                 continue
     return moved 
 
+## --  HELPER FUNCTIONS -- ##
+
+## Detects if the player passed into the function has won the game 
+# board: list with list elements,  each of the list elements represents a row in the board
+# size: integer to indicate size of the board
+# player: can be either "w" or "b", indicates whose move we want to predict/ who the maximizing player is
+def haveWon(board, size, player, turn):
+    # white pawn is the maximizing player
+    if (player == "w"):
+        # checks to see if captured all black pawns
+        for row in board: 
+            if "b" in row:
+                break
+        else:
+            return True
+        # one of the white pawns reach the opposite end of the board
+        # which could be any space in last row (size-1)
+        if "w" in board[size-1]:
+            return True
+        # it's your opponent's turn but your opponent can't move
+        if turn == "b" and cannotMove(board,size, turn) == True:
+            return True
+
+    # black pawn is the maximizing player 
+    else:
+        # checks to see if captured all white pawns
+        for row in board: 
+            if "w" in row:
+                break
+        else:
+            return True
+        # black pawn has reached the opposite end of the board
+        if "b" in board[0]:
+            return True
+        # it's white pawns' turn but they can't move
+        if turn == "w" and cannotMove(board,size,turn) == True:
+            return True
+
+    return False 
+
+# Determines if the players whose turn it is to move can move or not 
+# board: list with list elements,  each of the list elements represents a row in the board
+# size: integer to indicate size of the board
+# returns True if they cannot move, False if the can move 
+def cannotMove(board, size, turn):
+    whiteCoords, blackCoords = findCoords(board, size)
+    # white pawns' turn to move 
+    if turn == "w":
+        for coord in whiteCoords:
+            try: 
+                # test if they can move down
+                if board[coord[0]+1][coord[1]] == "-":
+                    return False 
+            except: pass
+            try: 
+                # test if they can move diagonally left 
+                if [coord[0]+1, coord[1]-1] in blackCoords:
+                    return False 
+            except: pass
+            try: 
+                # test if they can move diagonally right
+                if [coord[0]+1, coord[1]+1] in blackCoords:
+                    return False  
+            except: pass
+        return True
+    else:
+        for coord in blackCoords:
+            try: 
+                # test if they can move move up
+                if board[coord[0]-1][coord[1]] == "-":
+                    return False 
+            except: pass
+            try: 
+                # test if they can move diagonally left 
+                if [coord[0]-1, coord[1]-1] in whiteCoords:
+                    return False 
+            except: pass
+            try: 
+                # test if they can move diagonally right
+                if [coord[0]-1, coord[1]+1] in whiteCoords:
+                    return False  
+            except: pass
+        return True 
+
 # Finds coordinate positions of players' pawns
-# board: n-element list with each of the elements representing a row of the board
+# board: list with list elements,  each of the list elements represents a row in the board
 # size: integer to indicate size of the board
 # returns 2 lists: whiteCoords and blackCoords - each containing the 
-#   coordinate positions of all the pawns with the color indicated in the name
+#   coordinate positions of all the pawns with the associated color
 def findCoords(board, size):
     whiteCoords = []
     blackCoords = []
@@ -318,22 +324,25 @@ def findCoords(board, size):
                 blackCoords.append([x, y])
     return whiteCoords, blackCoords 
 
-
-# Prints out what the board looks like 
-# board: n-element list with each of the elements representing a row of the board
+## Prints out what the board looks like in readable form - for quick debugging 
+# board: list with list elements,  each of the list elements represents a row in the board
 def printBoard(board):
     for row in board:
         print("".join(row))
     print("\n")
 
-# Converts the strings representing the rows in the input argument to lists so they can be mutable 
-# board: n-element list with each of the elements representing a row of the board
+## Converts the strings representing the rows to lists so they can be mutable 
+# board: list of strings, each representing a row of the board
+# returns given board but with each of the elements as lists instead of strings 
 def stringToList(board):
     newBoard = [] 
     for row in board:
         newBoard.append(list(row))
     return newBoard
 
+## Converts the lists representing the rows back into strings for proper format
+#board: list with list elements,  each of the list elements represents a row in the board
+# returns list of strings, each representing a row of the board
 def listToString(board): 
     joined = []
     for row in board:
@@ -341,14 +350,14 @@ def listToString(board):
     return joined
 
 # -- TESTING -- #
-#result = hexapawn(["-ww","w--","bbb"],3,'b',2)
+#result = hexapawn(["-ww","w--","bbb"],3,'b',2) #['-ww', 'b--', 'b-b']
 #print(result)
 
-#result = hexapawn(['wwwww','-----','-----','-----','bbbbb'], 5, 'w', 5)
+#result = hexapawn(['wwwww','-----','-----','-----','bbbbb'], 5, 'w', 5) #['-wwww', 'w----', '-----', '-----', 'bbbbb']
 #print(result)
 
-#result = hexapawn(["www","---","bbb"],3,'w',2)
+#result = hexapawn(["www","---","bbb"],3,'w',2) #["-ww", "w--" , "bbb"]
 #print(result)
 
-result = hexapawn(["w-w","-w-","b-b"],3,'b',2)
-print(result)
+#result = hexapawn(["w-w","-w-","b-b"],3,'b',2) #["w-w","-b-","--b"]
+#print(result)
