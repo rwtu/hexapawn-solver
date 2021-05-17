@@ -26,6 +26,7 @@ def minimax(board, size, player, depth, turn):
     # base case - have reached desired depth or cannot make a move
     if depth == 0 or cannotMove(board, size, turn) == True:
         return (staticEval(board, size, player, turn), board)
+
     # if it's the turn of the maximizing player, want to get highest evaluation value from this position  
     if turn == player:
         maxEval = (-math.inf)
@@ -60,7 +61,8 @@ def minimax(board, size, player, depth, turn):
                 minBoard = child
         return (minEval, minBoard)
             
-## -- EVALUATION FUNCTION (from class slides) -- ##
+
+## -- STATIC EVALUATION FUNCTION (from class slides) -- ##
 #   +10 if you have won the board 
 #   -10 opponent wins
 #   num. your pawns - num. opponents pawns if no one wins 
@@ -71,7 +73,6 @@ def minimax(board, size, player, depth, turn):
 def staticEval(board, size, player, turn):
     boardVal = 0 
     whiteCoords, blackCoords = findCoords(board, size)
-    # white pawn is the maximizing player
     if player == "w": 
         # white pawns have won the board 
         if haveWon(board, size, player, turn) == True:
@@ -79,10 +80,9 @@ def staticEval(board, size, player, turn):
         # black pawns have won the board 
         elif haveWon(board, size, "b", turn) == True:
             boardVal = -10
-        # no one's won - calculate # of white pawns - # black pawns 
+        # no one's won 
         else: 
             boardVal = len(whiteCoords) - len(blackCoords)
-    # black pawn is the maximizing player
     if player == "b": 
         # black pawns have won the board 
         if haveWon(board, size, player, turn) == True:
@@ -90,7 +90,7 @@ def staticEval(board, size, player, turn):
         # white pawns have won the board 
         elif haveWon(board, size, "w", turn) == True:
             boardVal = -10
-        # no one's won - calculate # of black pawns - # white pawns 
+        # no one's won 
         else: 
             boardVal = len(blackCoords) - len(whiteCoords)
     return boardVal
@@ -100,7 +100,6 @@ def staticEval(board, size, player, turn):
 # size: integer to indicate size of the board
 # player: can be either "w" or "b", indicates whose move we want to predict/ who the maximizing player is
 def haveWon(board, size, player, turn):
-    # white pawn is the maximizing player
     if (player == "w"):
         # checks to see if captured all black pawns
         for row in board: 
@@ -111,11 +110,9 @@ def haveWon(board, size, player, turn):
         # one of the white pawns reach the opposite end of the board
         if "w" in board[size-1]:
             return True
-        # it's your opponent's turn but your opponent can't move
+        # it's black pawns' turn but they can't move
         if turn == "b" and cannotMove(board,size, turn) == True:
             return True
-
-    # black pawn is the maximizing player 
     else:
         # checks to see if captured all white pawns
         for row in board: 
@@ -132,27 +129,26 @@ def haveWon(board, size, player, turn):
 
     return False 
 
-## Determines if the players whose turn it is to move can move or not 
+## Determines if the players whose turn it is to move can make a valid move
 # board: list with list elements,  each of the list elements represents a row in the board
 # size: integer to indicate size of the board
 # returns True if they cannot move, False if the can move 
 def cannotMove(board, size, turn):
     whiteCoords, blackCoords = findCoords(board, size)
-    # white pawns' turn to move 
     if turn == "w":
         for coord in whiteCoords:
             try: 
-                # test if they can move down
+                # test if white pawn can move down
                 if board[coord[0]+1][coord[1]] == "-":
                     return False 
             except: pass
             try: 
-                # test if they can move diagonally left 
+                # test if white pawn can move diagonally left
                 if [coord[0]+1, coord[1]-1] in blackCoords:
                     return False 
             except: pass
             try: 
-                # test if they can move diagonally right
+                # test if white pawn can move diagonally right 
                 if [coord[0]+1, coord[1]+1] in blackCoords:
                     return False  
             except: pass
@@ -160,17 +156,17 @@ def cannotMove(board, size, turn):
     else:
         for coord in blackCoords:
             try: 
-                # test if they can move move up
+                # test if black pawn can move move up
                 if board[coord[0]-1][coord[1]] == "-":
                     return False 
             except: pass
             try: 
-                # test if they can move diagonally left 
+                # test if black pawn can move diagonally left 
                 if [coord[0]-1, coord[1]-1] in whiteCoords:
                     return False 
             except: pass
             try: 
-                # test if they can move diagonally right
+                # test if black pawn can move diagonally right
                 if [coord[0]-1, coord[1]+1] in whiteCoords:
                     return False  
             except: pass
@@ -197,15 +193,14 @@ def moveAhead(board, size, turn):
     if (turn == "w"):
         for coord in whiteCoords:
             try: 
-                # add 1 to the x coordinate to get position if white pawn moved down
+                # position if white pawn moved down
                 mvDown = [coord[0]+1, coord[1]] 
                 # if that position is empty, then can move there
                 if board[mvDown[0]][mvDown[1]] == "-":
-                    # copy the board 
                     boardCpy = [row[:] for row in board]
                     # access the position of where the white pawn was and change it to empty
                     boardCpy[coord[0]][coord[1]] = "-"
-                    # access the position of where the white pawn is going to move and change it to "w"
+                    # "move" pawn 
                     boardCpy[mvDown[0]][mvDown[1]] = "w"
                     moved.append(boardCpy)
             except:
@@ -215,15 +210,14 @@ def moveAhead(board, size, turn):
     else:
         for coord in blackCoords: 
             try:
-                # subtract 1 to the x coodinate to get position if black pawn moved up 
+                # position if black pawn moved up 
                 mvUp = [coord[0]-1, coord[1]] 
                 # if that position is empty, then can move there
                 if board[mvUp[0]][mvUp[1]] == "-":
-                    # copy the board 
                     boardCpy = [row[:] for row in board]
                     # access the position of where the black pawn was and change it to empty 
                     boardCpy[coord[0]][coord[1]] = "-"
-                    # access the position of where the black pawn is going to move and change it to "b"
+                    # "move" pawn
                     boardCpy[mvUp[0]][mvUp[1]] = "b"
                     moved.append(boardCpy)
             except: 
@@ -248,11 +242,10 @@ def moveDiagonal(board, size, turn):
                 # if that position is in the blackCoords list, we can move there 
                 if mvDiagLeft in blackCoords:
                     boardCpy = [row[:] for row in board]
-                    # access the position of where the white pawn was and change it to empty "-"
+                    # access the position of where the white pawn was and change it to empty
                     boardCpy[coord[0]][coord[1]] = "-"
-                    # access the position of where the white pawn is going to move and change it to "w"
+                    # "move" pawn
                     boardCpy[mvDiagLeft[0]][mvDiagLeft[1]] = "w"
-                    # append the new board state to moved
                     moved.append(boardCpy) 
             except:
                 pass
@@ -262,11 +255,10 @@ def moveDiagonal(board, size, turn):
                 # if that position is in the blackCoords list, we can move there 
                 if mvDiagRight in blackCoords:
                     boardCpy = [row[:] for row in board]
-                    # access the position of where the white pawn was and change it to empty "-"
+                    # access the position of where the white pawn was and change it to empty 
                     boardCpy[coord[0]][coord[1]] = "-"
-                    # access the position of where the white pawn is going to move and change it to "w"
+                    # "move" pawn
                     boardCpy[mvDiagRight[0]][mvDiagRight[1]] = "w"
-                    # append the new board state to moved
                     moved.append(boardCpy) 
             except:
                 continue
@@ -280,11 +272,10 @@ def moveDiagonal(board, size, turn):
                 # if that position is in the whiteCoords list, we can move there 
                 if mvDiagLeft in whiteCoords:
                     boardCpy = [row[:] for row in board]
-                    # access the position of where the black pawn was and change it to empty "b"
+                    # access the position of where the black pawn was and change it to empty
                     boardCpy[coord[0]][coord[1]] = "-"
-                    # access the position of where the black pawn is going to move and change it to "b"
+                    # "move" pawn
                     boardCpy[mvDiagLeft[0]][mvDiagLeft[1]] = "b"
-                    # append the new board state to moved
                     moved.append(boardCpy) 
             except:
                 pass
@@ -294,11 +285,10 @@ def moveDiagonal(board, size, turn):
                 # if that position is in the whiteCoords list, we can move there 
                 if mvDiagRight in whiteCoords:
                     boardCpy = [row[:] for row in board]
-                    # access the position of where the black pawn was and change it to empty "-"
+                    # access the position of where the black pawn was and change it to empty 
                     boardCpy[coord[0]][coord[1]] = "-"
-                    # access the position of where the black pawn is going to move and change it to "b"
+                    # "move" pawn
                     boardCpy[mvDiagRight[0]][mvDiagRight[1]] = "b"
-                    # append the new board state to moved
                     moved.append(boardCpy) 
             except:
                 continue
