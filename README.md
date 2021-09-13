@@ -6,7 +6,7 @@ Finds the optimal next move based on the minimax algorithm
 - size: integer to indicate size of the board
 - player: can be either "w" or "b", whose move we want to predict/who the maximizing player is
 - depth: integer to indicate how many moves ahead minimax is to look
-example) hexapawn(["-ww","w--","bbb"], 3, 'b', 2)
+- example) hexapawn(["-ww","w--","bbb"], 3, 'b', 2)
 
 ## Hexapawn Rules 
 ### Setup
